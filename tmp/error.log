@@ -1,2 +1,0 @@
-2025-07-04 11:09:00 [core] [PHP ERROR] [8192] Creation of dynamic property App\Core\Router\Router::$middlewareRegistry is deprecated in D:\Websites\Test_Project\app\core\router\Router.php on line 65
-2025-07-04 11:09:00 [core] [PHP ERROR] [8192] Creation of dynamic property App\Core\Router\Router::$middlewareRegistry is deprecated in D:\Websites\Test_Project\app\core\router\Router.php on line 65

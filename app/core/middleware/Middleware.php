@@ -3,9 +3,8 @@ declare(strict_types=1);
 
 namespace App\Core\Middleware;
 
-use App\Core\Services\Authentication;
+use App\Core\Services\{Authentication, CoreException};
 use App\Core\App;
-use App\Core\Services\CoreException;
 
 /**
  * Class Middleware

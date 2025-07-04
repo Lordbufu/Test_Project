@@ -11,44 +11,37 @@ namespace App\Core\Router;
  *
  * @package App\Core\Router
  */
-class Route
-{
+class Route {
     /**
      * HTTP method (GET, POST, etc.)
      * @var string
      */
     protected string $method;
-
     /**
      * Route pattern (e.g., '/user/{id}')
      * @var string
      */
     protected string $pattern;
-
     /**
      * Route callback (action script path or callable)
      * @var callable|string
      */
     protected $callback;
-
     /**
      * Optional route name
      * @var string|null
      */
     protected ?string $name;
-
     /**
      * Middleware callbacks for this route
      * @var array
      */
     protected array $middleware = [];
-
     /**
      * User groups allowed to access this route
      * @var array
      */
     protected array $groups = [];
-
 
     /**
      * Route constructor.
@@ -59,8 +52,7 @@ class Route
      * @param string|null $name Optional route name
      * @param array $middleware Optional array of middleware callbacks
      */
-    public function __construct(string $method, string $pattern, $callback, ?string $name = null, array $middleware = [])
-    {
+    public function __construct(string $method, string $pattern, $callback, ?string $name = null, array $middleware = []) {
         $this->method = strtoupper($method);
         $this->pattern = $pattern;
         $this->callback = $callback;
@@ -75,8 +67,7 @@ class Route
      * @param string|array $group One or more group names (string or array)
      * @return $this
      */
-    public function only($group): self
-    {
+    public function only($group): self {
         if (!is_array($group)) {
             $group = [$group];
         }
@@ -108,6 +99,16 @@ class Route
      * @return string|null
      */
     public function getName(): ?string { return $this->name; }
+
+    /**
+     * Setter for middleware array.
+     * @param array $middleware Array of middleware callbacks for this route.
+     * @return $this
+     */
+    public function middleware(array $middleware): self {
+        $this->middleware = $middleware;
+        return $this;
+    }
 
     /**
      * Get the middleware callbacks for this route.

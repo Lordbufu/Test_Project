@@ -45,6 +45,11 @@ class Router {
      * @var array
      */
     protected array $config;
+    /**
+     * Custom middleware registry
+     * Allows registering middleware by name and using it in routes
+     * @var array
+     */
     protected array $middlewareRegistry;
 
     /**
@@ -62,7 +67,7 @@ class Router {
 
         // init costum Middleware registry
         $registryPath = $this->config['middleware_registry'] ?? __DIR__ . '/../../ext/MiddlewareRegistry.php';
-        
+
         if (file_exists($registryPath)) {
             $this->middlewareRegistry = require $registryPath;
         } else {
@@ -120,15 +125,16 @@ class Router {
      * @param string $pattern
      * @param callable|string $callback
      * @param string|null $name
+     * @param array $middleware Optional middleware for this route
      * @return Route
      */
-    public function get(string $pattern, $callback, ?string $name = null, array $test = null): Route {
-        //die(var_dump(print_r("Pattern: " . $pattern)));
-        //die(var_dump(print_r("Callback: " . $callback)));
-        //die(var_dump(print_r("Name: " . $name)));
-        die(var_dump(print_r("Test: " . $test)));
-        //die(var_dump(print_r($this->middlewareRegistry['oddMinuteBlock'])));
-        return $this->add('GET', $pattern, $callback, $name);
+    public function get(string $pattern, $callback, ?string $name = null, array $middleware = []): Route {
+        // Register the route using the add function as intended.
+        $route = $this->add('GET', $pattern, $callback, $name);
+        // Store the middleware on that Route, using the middleware() function as intended.
+        $route->middleware($middleware);
+        // Return the route object for further chaining if needed.
+        return $route;
     }
 
     /**
@@ -259,9 +265,7 @@ class Router {
         $uri = $requestUri ?? parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
         $method = strtoupper($requestMethod ?? $_SERVER['REQUEST_METHOD']);
 
-        error_log('[ROUTER DEBUG] Registered routes: ' . count($this->routes));
         foreach($this->routes as $route) {
-            error_log('[ROUTER DEBUG] Route: ' . $route->getPattern() . ' | Method: ' . $route->getMethod() . ' | Middleware count: ' . count($route->getMiddleware()));
             if ($route->getMethod() !== $method) {
                 continue;
             }
@@ -277,6 +281,7 @@ class Router {
                 },
                 $route->getPattern()
             );
+            
             $pattern = "#^" . $pattern . "$#";
 
             if(preg_match($pattern, $uri, $matches)) {
@@ -300,28 +305,40 @@ class Router {
                     }
                 }
 
-                // Run route-specific middleware
+                // Run route-specific middleware, and pre-load the registry
                 $routeMiddleware = $route->getMiddleware();
+                $registry = $this->middlewareRegistry;
 
-                error_log('[ROUTER DEBUG] Per-route middleware count: ' . count($routeMiddleware));
+                foreach($routeMiddleware as $i => $mwEntry) {
+                    if(is_string($mwEntry) && isset($registry[$mwEntry])&& is_callable($registry[$mwEntry])) {
+                        // call the closure from MiddlewareRegistry.php
+                        $result = $registry[$mwEntry]($uri, $method);
+                    } elseif(is_string($mwEntry) && class_exists($mwEntry)) {
+                        $mw = new $mwEntry();
 
-                foreach($routeMiddleware as $i => $mw) {
-                    error_log('[ROUTER DEBUG] Executing middleware #' . $i);
-                    $result = call_user_func($mw, $uri, $method);
-                    if ($result === false) {
-                        error_log('[ROUTER DEBUG] Middleware #' . $i . ' returned false.');
-                        return null;
+                        if(! method_exists($mw, 'handle')) {
+                            throw new \RuntimeException("{$mwEntry} must have a handle() method");
+                        }
+
+                        $result = $mw->handle($uri, $method);
+                    } elseif(is_callable($mwEntry)) {
+                        $result = $mwEntry($uri, $method);
+                    } else {
+                        continue;
                     }
+
+                    // if a middleware returns false, stop dispatch
+                    if($result === false) { return null; }
                 }
 
+                // fall through to your controller action
                 $callback = $this->resolveCallback($route->getCallback(), $route->getPattern());
-
                 return call_user_func_array($callback, $matches);
             }
         }
 
         // No route matched: call custom 404 or default
-        if ($this->notFound) {
+        if($this->notFound) {
             call_user_func($this->notFound);
         } else {
             http_response_code(404);
