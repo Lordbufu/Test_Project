@@ -12,6 +12,7 @@ This checklist covers all core features, extensibility points, and recommended e
 - [x] 1.3: Add a route with a dynamic parameter and verify parsing
     - _Tested: Route like `/user/{id}` and controller that outputs the ID. Confirmed parameter parsing works. Temporary files removed._
 
+## 2. Middleware & Access Control
 - [x] 2.1: Access a route restricted to `'guests'` as an unauthenticated user
     - _Tested: Guest access to '/' works as expected._
 - [x] 2.2: Access the same route after logging in (should be denied)
