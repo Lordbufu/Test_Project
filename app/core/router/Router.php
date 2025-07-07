@@ -316,7 +316,7 @@ class Router {
                     } elseif(is_string($mwEntry) && class_exists($mwEntry)) {
                         $mw = new $mwEntry();
 
-                        if(! method_exists($mw, 'handle')) {
+                        if(!method_exists($mw, 'handle')) {
                             throw new \RuntimeException("{$mwEntry} must have a handle() method");
                         }
 
